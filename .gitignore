@@ -1,0 +1,8 @@
+.DS_Store
+main
+logs/*.log
+*.log
+.idea
+*.xml
+*.iml
+*.out
