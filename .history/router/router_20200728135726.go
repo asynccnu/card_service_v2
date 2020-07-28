@@ -24,16 +24,15 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	})
 
 	// The user handlers, requiring authentication
-	u := g.Group("/user")
+	u := g.Group("/api/v1/user")
+	u.Use(middleware.AuthMiddleware())
 	{
-		u.GET("/Status",user.Status)			//余额和状态
-		u.GET("/List",user.List)				//消费流水
+		u.POST("", user.Create)
+		u.DELETE("/:id", user.Delete)
+		u.PUT("/:id", user.Update)
+		u.GET("", user.List)
+		u.GET("/:username", user.Get)
 	}
-	// u.Use(middleware.AuthMiddleware())
-	// {
-		
-	// 	u.GET("/info", user.info)
-	// }
 
 	// The health check handlers
 	svcd := g.Group("/sd")

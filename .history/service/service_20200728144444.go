@@ -368,7 +368,7 @@ func DoList(User_id, Password, Limit, Page, Start, End string) string{
 	result := string(bstr)
 	return result
 }
-func DoStatus(User_id, Password string) string{
+func Do(User_id, Password string) string{
 	params, err := makeAccountPreflightRequest2()
 	if err != nil {
 		log.Println(err)
