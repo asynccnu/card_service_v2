@@ -3,7 +3,6 @@ package model
 // import (
 // 	"fmt"
 
-
 // 	"github.com/asynccnu/card_service_v2/pkg/auth"
 // 	"github.com/asynccnu/card_service_v2/pkg/constvar"
 

@@ -47,6 +47,7 @@ func Status(c *gin.Context) {
 		json.Unmarshal([]byte(ret), &s)
 		c.JSON(200, gin.H{
 			"message": "Authentiaction Success.",
+			//"ret":   ret,
 			"status":	s.CardInfo.StatusDesc,
 			 "money": s.CardInfo.Balance,
 		})
@@ -57,7 +58,7 @@ func Status(c *gin.Context) {
 type LSParm struct {
 	User_id  string `json:"user_id"`
 	Password string `json:"password"`
-	Limit string	
+	Limit string
 	Page string
 	Start string
 	End string

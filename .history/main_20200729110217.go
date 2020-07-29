@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-	//"github.com/asynccnu/card_service_v2/model"
+
 	"github.com/asynccnu/card_service_v2/config"
 	"github.com/asynccnu/card_service_v2/log"
 	"github.com/asynccnu/card_service_v2/router"

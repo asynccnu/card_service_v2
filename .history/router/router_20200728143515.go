@@ -29,7 +29,11 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 		u.GET("/Status",user.Status)			//余额和状态
 		u.GET("/List",user.List)				//消费流水
 	}
-	
+	// u.Use(middleware.AuthMiddleware())
+	// {
+		
+	// 	u.GET("/info", user.info)
+	// }
 
 	// The health check handlers
 	svcd := g.Group("/sd")

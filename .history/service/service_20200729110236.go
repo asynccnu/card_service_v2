@@ -164,7 +164,15 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 		log.Println(err)
 		return false
 	}
-
+	// 获取 Cookie 中的 JSESSIONID
+	//fmt.Println("======================")
+	// for _, cookie := range resp.Cookies() {
+	// 	//fmt.Println(cookie.Value)
+		
+	// 	fmt.Println(cookie.Name)
+	// 	fmt.Println(cookie.Value)
+	// }
+	// check
 	reg := regexp.MustCompile("class=\"success\"")
 	matched := reg.MatchString(string(body))
 	if !matched {

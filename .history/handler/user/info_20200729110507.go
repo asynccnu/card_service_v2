@@ -47,6 +47,7 @@ func Status(c *gin.Context) {
 		json.Unmarshal([]byte(ret), &s)
 		c.JSON(200, gin.H{
 			"message": "Authentiaction Success.",
+			//"ret":   ret,
 			"status":	s.CardInfo.StatusDesc,
 			 "money": s.CardInfo.Balance,
 		})
