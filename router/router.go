@@ -23,11 +23,11 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 		c.String(http.StatusNotFound, "The incorrect API route.")
 	})
 
-	// The user handlers, requiring authentication
-	u := g.Group("/user")
+	// The card handlers, requiring authentication
+	u := g.Group("/card")
 	{
-		u.GET("/Status",user.Status)			//余额和状态
-		u.GET("/List",user.List)				//消费流水
+		u.GET("/balance", user.Balance)				//余额和状态
+		u.GET("/account", user.Account)				//消费流水
 	}
 	
 

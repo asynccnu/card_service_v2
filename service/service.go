@@ -70,7 +70,7 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 		log.Println(err)
 		return params, err
 	}
-	//request.Header.Add("User-Agent","Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
+	
 	// 发起请求
 	resp, err := client.Do(request)
 	if err != nil {
@@ -156,6 +156,7 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 	resp, err := client.Do(request)
 	if err != nil {
 		log.Print(err)
+		return false
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -168,11 +169,10 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 	reg := regexp.MustCompile("class=\"success\"")
 	matched := reg.MatchString(string(body))
 	if !matched {
-		//log.Println("Wrong sid or pwd")
+		log.Println("Wrong sid or pwd")
 		return false
 	}
-	//fmt.Println(string(body))
-	//log.Println("Login successfully")
+	
 	return true
 }
 
@@ -202,103 +202,15 @@ func makeAccountRequest2(sid, password string, params *accountReqeustParams, cli
 			s2 = cookie.Value
 		}
 	}
-	if err,w = get2(s1, s2, client);err!=nil{
+	if err,w = GetToken(s1, s2, client);err!=nil{
+		log.Println(err)
 		return ""
 	}
 
 	return w
 }
-func makeAccountPreflightRequest2() (*accountReqeustParams, error) {
-	var JSESSIONID string
-	var lt string
-	var execution string
-	var _eventId string
 
-	params := &accountReqeustParams{}
-
-	// 初始化 http client
-	client := http.Client{
-		//Timeout: TIMEOUT,
-	}
-
-	// 初始化 http request
-	request, err := http.NewRequest("GET", "https://account.ccnu.edu.cn/cas/login", nil)
-	if err != nil {
-		log.Println(err)
-		return params, err
-	}
-	//request.Header.Add("User-Agent","Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
-	// 发起请求
-	resp, err := client.Do(request)
-	if err != nil {
-
-		log.Println(err)
-		return params, err
-	}
-
-	// 读取 Body
-	body, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-
-	if err != nil {
-		log.Println(err)
-		return params, err
-	}
-	
-	// 获取 Cookie 中的 JSESSIONID
-	for _, cookie := range resp.Cookies() {
-		//fmt.Println(cookie.Value)
-		if cookie.Name == "JSESSIONID" {
-			JSESSIONID = cookie.Value
-		}
-		// fmt.Println(cookie.Name)
-		// fmt.Println(cookie.Value)
-	}
-
-	if JSESSIONID == "" {
-		log.Println("Can not get JSESSIONID")
-		return params, errors.New("Can not get JSESSIONID")
-	}
-
-	// 正则匹配 HTML 返回的表单字段
-	ltReg := regexp.MustCompile("name=\"lt\".+value=\"(.+)\"")
-	executionReg := regexp.MustCompile("name=\"execution\".+value=\"(.+)\"")
-	_eventIdReg := regexp.MustCompile("name=\"_eventId\".+value=\"(.+)\"")
-
-	bodyStr := string(body)
-
-	ltArr := ltReg.FindStringSubmatch(bodyStr)
-	if len(ltArr) != 2 {
-		log.Println("Can not get form paramater: lt")
-		return params, errors.New("Can not get form paramater: lt")
-	}
-	lt = ltArr[1]
-
-	execArr := executionReg.FindStringSubmatch(bodyStr)
-	if len(execArr) != 2 {
-		log.Println("Can not get form paramater: execution")
-		return params, errors.New("Can not get form paramater: execution")
-	}
-	execution = execArr[1]
-
-	_eventIdArr := _eventIdReg.FindStringSubmatch(bodyStr)
-	if len(_eventIdArr) != 2 {
-		log.Println("Can not get form paramater: _eventId")
-		return params, errors.New("Can not get form paramater: _eventId")
-	}
-	_eventId = _eventIdArr[1]
-
-	//log.Println("Get params successfully", lt, execution, _eventId)
-
-	params.lt = lt
-	params.execution = execution
-	params._eventId = _eventId
-	params.submit = "LOGIN"
-	params.JSESSIONID = JSESSIONID
-
-	return params, nil
-}
-func get2(sessionid, rt string, client *http.Client) (error,string ){
+func GetToken(sessionid, routeportal string, client *http.Client) (error,string ){
 	request, err := http.NewRequest("GET", "http://one.ccnu.edu.cn/cas/login_portal;jsessionid=" + sessionid, nil)
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
@@ -306,6 +218,7 @@ func get2(sessionid, rt string, client *http.Client) (error,string ){
 	if err != nil {
 		return err,""
 	}
+	
 	for _, cookie := range resp.Cookies() {
 		if cookie.Name == "PORTAL_TOKEN" {
 			return nil,cookie.Value
@@ -313,8 +226,9 @@ func get2(sessionid, rt string, client *http.Client) (error,string ){
 	}
 	return err,""
 }
+
 func DoList(User_id, Password, Limit, Page, Start, End string) string{
-	params, err := makeAccountPreflightRequest2()
+	params, err := makeAccountPreflightRequest()
 	if err != nil {
 		log.Println(err)
 		return "false"
@@ -338,12 +252,16 @@ func DoList(User_id, Password, Limit, Page, Start, End string) string{
 	v.Set("end", End)
 	v.Set("tranType", "")
 	
-	req, _ := http.NewRequest("POST", "http://one.ccnu.edu.cn/ecard_portal/query_trans", strings.NewReader(v.Encode()))
+	req, err := http.NewRequest("POST", "http://one.ccnu.edu.cn/ecard_portal/query_trans", strings.NewReader(v.Encode()))
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	austr := fmt.Sprintf("Bearer %s", token)
 	req.Header.Set("Authorization", austr)
 
-	//fmt.Println(params.JSESSIONID)
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println(err)
@@ -360,17 +278,18 @@ func DoList(User_id, Password, Limit, Page, Start, End string) string{
 	result := string(bstr)
 	return result
 }
+
 func DoStatus(User_id, Password string) string{
-	params, err := makeAccountPreflightRequest2()
+	params, err := makeAccountPreflightRequest()
 	if err != nil {
 		log.Println(err)
-		return "false"
+		return ""
 	}
 
 	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	if err != nil {
 		log.Println(err)
-		return "false"
+		return ""
 	}
 	client := http.Client{
 		Timeout: time.Duration(10 * time.Second),
@@ -384,7 +303,6 @@ func DoStatus(User_id, Password string) string{
 	austr := fmt.Sprintf("Bearer %s", token)
 	req.Header.Set("Authorization", austr)
 
-	//fmt.Println(params.JSESSIONID)
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println(string(v.Encode()))
