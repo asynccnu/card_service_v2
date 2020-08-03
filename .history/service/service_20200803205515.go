@@ -19,7 +19,7 @@ import(
 type accountReqeustParams struct {
 	lt         string
 	execution  string
-	eventId   string
+	_eventId   string
 	submit     string
 	jsessionid string
 }
@@ -50,7 +50,7 @@ func ConfirmUser(sid string, pwd string) bool {
 
 // 预处理，打开 account.ccnu.edu.cn 获取模拟登陆需要的表单字段
 func makeAccountPreflightRequest() (*accountReqeustParams, error) {
-	var JSESSIONID string
+	var jsessionid string
 	var lt string
 	var execution string
 	var _eventId string
@@ -129,9 +129,9 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 
 	params.lt = lt
 	params.execution = execution
-	params.eventId = _eventId
+	params._eventId = _eventId
 	params.submit = "LOGIN"
-	params.jsessionid = JSESSIONID
+	params.JSESSIONID = JSESSIONID
 
 	return params, nil
 }
@@ -143,10 +143,10 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 	v.Set("password", password)
 	v.Set("lt", params.lt)
 	v.Set("execution", params.execution)
-	v.Set("_eventId", params.eventId)
+	v.Set("_eventId", params._eventId)
 	v.Set("submit", params.submit)
 
-	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
+	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.JSESSIONID, strings.NewReader(v.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
 
@@ -180,10 +180,10 @@ func makeAccountRequest2(sid, password string, params *accountReqeustParams, cli
 	v.Set("password", password)
 	v.Set("lt", params.lt)
 	v.Set("execution", params.execution)
-	v.Set("_eventId", params.eventId)
+	v.Set("_eventId", params._eventId)
 	v.Set("submit", params.submit)
 
-	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
+	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.JSESSIONID, strings.NewReader(v.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
 

@@ -15,13 +15,13 @@ import(
 )
 //和网页有关函数（基础）
 
-//结构体,改了名字以后就登陆不了
+//结构体
 type accountReqeustParams struct {
 	lt         string
 	execution  string
 	eventId   string
 	submit     string
-	jsessionid string
+	JSESSIONID string jess
 }
 
 
@@ -53,7 +53,7 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 	var JSESSIONID string
 	var lt string
 	var execution string
-	var _eventId string
+	var eventId string
 
 	params := &accountReqeustParams{}
 
@@ -102,7 +102,7 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 	// 正则匹配 HTML 返回的表单字段
 	ltReg := regexp.MustCompile("name=\"lt\".+value=\"(.+)\"")
 	executionReg := regexp.MustCompile("name=\"execution\".+value=\"(.+)\"")
-	_eventIdReg := regexp.MustCompile("name=\"_eventId\".+value=\"(.+)\"")
+	eventIdReg := regexp.MustCompile("name=\"eventId\".+value=\"(.+)\"")
 
 	bodyStr := string(body)
 
@@ -120,18 +120,18 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 	}
 	execution = execArr[1]
 
-	_eventIdArr := _eventIdReg.FindStringSubmatch(bodyStr)
-	if len(_eventIdArr) != 2 {
-		log.Println("Can not get form paramater: _eventId")
-		return params, errors.New("Can not get form paramater: _eventId")
+	eventIdArr := eventIdReg.FindStringSubmatch(bodyStr)
+	if len(eventIdArr) != 2 {
+		log.Println("Can not get form paramater: eventId")
+		return params, errors.New("Can not get form paramater: eventId")
 	}
-	_eventId = _eventIdArr[1]
+	eventId = eventIdArr[1]
 
 	params.lt = lt
 	params.execution = execution
-	params.eventId = _eventId
+	params.eventId = eventId
 	params.submit = "LOGIN"
-	params.jsessionid = JSESSIONID
+	params.JSESSIONID = JSESSIONID
 
 	return params, nil
 }
@@ -143,10 +143,10 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 	v.Set("password", password)
 	v.Set("lt", params.lt)
 	v.Set("execution", params.execution)
-	v.Set("_eventId", params.eventId)
+	v.Set("eventId", params.eventId)
 	v.Set("submit", params.submit)
 
-	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
+	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.JSESSIONID, strings.NewReader(v.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
 
@@ -180,10 +180,10 @@ func makeAccountRequest2(sid, password string, params *accountReqeustParams, cli
 	v.Set("password", password)
 	v.Set("lt", params.lt)
 	v.Set("execution", params.execution)
-	v.Set("_eventId", params.eventId)
+	v.Set("eventId", params.eventId)
 	v.Set("submit", params.submit)
 
-	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
+	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.JSESSIONID, strings.NewReader(v.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
 

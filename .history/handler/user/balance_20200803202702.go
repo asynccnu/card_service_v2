@@ -29,7 +29,7 @@ type Card struct {
 	CardInfo	CardInfo	`json:"cardInfo"`
 }
 
-// Get  gets status and money by userid and password
+
 func Balance(c *gin.Context) {
 	var data LoginPayload // 声明payload变量，因为BindJSON方法需要接收一个指针进行操作
 	var s Card
@@ -44,15 +44,14 @@ func Balance(c *gin.Context) {
 		})
 		return
 	}
-		
-	ret := service.DoStatus(data.User_id, data.Password)
-	json.Unmarshal([]byte(ret), &s)
-	c.JSON(200, gin.H{
-		"message": "Authentiaction Success.",
-		"status":	s.CardInfo.StatusDesc,
-		 "money": 	s.CardInfo.Balance,
-			})
-
+		ret := service.DoStatus(data.User_id, data.Password)
+		json.Unmarshal([]byte(ret), &s)
+		c.JSON(200, gin.H{
+			"message": "Authentiaction Success.",
+			"status":	s.CardInfo.StatusDesc,
+			 "money": 	s.CardInfo.Balance,
+		})
+	}
 	return
 }
 

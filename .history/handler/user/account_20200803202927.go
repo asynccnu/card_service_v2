@@ -36,7 +36,7 @@ type Row struct{
 	InMoney			float32		`json:"inMoney"`
 }
 
-// Get gets an account by userid and password
+// Get gets an account by user 
 func Account(c *gin.Context) {
 	var data Param // 声明payload变量，因为BindJSON方法需要接收一个指针进行操作
 	var s TempAccount

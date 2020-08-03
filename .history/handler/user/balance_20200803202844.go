@@ -38,6 +38,7 @@ func Balance(c *gin.Context) {
 		return
 	}
 
+	
 	if !service.ConfirmUser(data.User_id, data.Password) { // 检查失败的情况
 		c.JSON(401, gin.H{
 			"message": "Password or account wrong.",
@@ -52,7 +53,7 @@ func Balance(c *gin.Context) {
 		"status":	s.CardInfo.StatusDesc,
 		 "money": 	s.CardInfo.Balance,
 			})
-
+}
 	return
 }
 

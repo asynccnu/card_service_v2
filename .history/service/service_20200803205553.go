@@ -19,7 +19,7 @@ import(
 type accountReqeustParams struct {
 	lt         string
 	execution  string
-	eventId   string
+	_eventId   string
 	submit     string
 	jsessionid string
 }
@@ -129,7 +129,7 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 
 	params.lt = lt
 	params.execution = execution
-	params.eventId = _eventId
+	params._eventId = _eventId
 	params.submit = "LOGIN"
 	params.jsessionid = JSESSIONID
 
@@ -143,7 +143,7 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 	v.Set("password", password)
 	v.Set("lt", params.lt)
 	v.Set("execution", params.execution)
-	v.Set("_eventId", params.eventId)
+	v.Set("_eventId", params._eventId)
 	v.Set("submit", params.submit)
 
 	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
@@ -180,7 +180,7 @@ func makeAccountRequest2(sid, password string, params *accountReqeustParams, cli
 	v.Set("password", password)
 	v.Set("lt", params.lt)
 	v.Set("execution", params.execution)
-	v.Set("_eventId", params.eventId)
+	v.Set("_eventId", params._eventId)
 	v.Set("submit", params.submit)
 
 	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))

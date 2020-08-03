@@ -29,7 +29,7 @@ type Card struct {
 	CardInfo	CardInfo	`json:"cardInfo"`
 }
 
-// Get  gets status and money by userid and password
+// Get  gets status and money by 
 func Balance(c *gin.Context) {
 	var data LoginPayload // 声明payload变量，因为BindJSON方法需要接收一个指针进行操作
 	var s Card
@@ -52,7 +52,7 @@ func Balance(c *gin.Context) {
 		"status":	s.CardInfo.StatusDesc,
 		 "money": 	s.CardInfo.Balance,
 			})
-
+}
 	return
 }
 

@@ -15,13 +15,13 @@ import(
 )
 //和网页有关函数（基础）
 
-//结构体,改了名字以后就登陆不了
+//结构体
 type accountReqeustParams struct {
 	lt         string
 	execution  string
 	eventId   string
 	submit     string
-	jsessionid string
+	jsessionid string 
 }
 
 
@@ -50,7 +50,7 @@ func ConfirmUser(sid string, pwd string) bool {
 
 // 预处理，打开 account.ccnu.edu.cn 获取模拟登陆需要的表单字段
 func makeAccountPreflightRequest() (*accountReqeustParams, error) {
-	var JSESSIONID string
+	var jsessionid string
 	var lt string
 	var execution string
 	var _eventId string
@@ -90,11 +90,11 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 	for _, cookie := range resp.Cookies() {
 		//fmt.Println(cookie.Value)
 		if cookie.Name == "JSESSIONID" {
-			JSESSIONID = cookie.Value
+			jsessionid = cookie.Value
 		}
 	}
 
-	if JSESSIONID == "" {
+	if jsessionid == "" {
 		log.Println("Can not get JSESSIONID")
 		return params, errors.New("Can not get JSESSIONID")
 	}
@@ -121,17 +121,17 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 	execution = execArr[1]
 
 	_eventIdArr := _eventIdReg.FindStringSubmatch(bodyStr)
-	if len(_eventIdArr) != 2 {
+	if len(eventIdArr) != 2 {
 		log.Println("Can not get form paramater: _eventId")
-		return params, errors.New("Can not get form paramater: _eventId")
+		return params, errors.New("Can not get form paramater: eventId")
 	}
-	_eventId = _eventIdArr[1]
+	eventId = eventIdArr[1]
 
 	params.lt = lt
 	params.execution = execution
-	params.eventId = _eventId
+	params.eventId = eventId
 	params.submit = "LOGIN"
-	params.jsessionid = JSESSIONID
+	params.jsessionid = jsessionid
 
 	return params, nil
 }
@@ -143,7 +143,7 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 	v.Set("password", password)
 	v.Set("lt", params.lt)
 	v.Set("execution", params.execution)
-	v.Set("_eventId", params.eventId)
+	v.Set("eventId", params.eventId)
 	v.Set("submit", params.submit)
 
 	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
@@ -180,7 +180,7 @@ func makeAccountRequest2(sid, password string, params *accountReqeustParams, cli
 	v.Set("password", password)
 	v.Set("lt", params.lt)
 	v.Set("execution", params.execution)
-	v.Set("_eventId", params.eventId)
+	v.Set("eventId", params.eventId)
 	v.Set("submit", params.submit)
 
 	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))

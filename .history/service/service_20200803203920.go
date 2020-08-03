@@ -1,6 +1,8 @@
 package service
 
 import(
+
+	//"encoding/json"
 	"errors"
 	"golang.org/x/net/publicsuffix"
 	"io/ioutil"
@@ -13,15 +15,14 @@ import(
 	"time"
 	
 )
-//和网页有关函数（基础）
 
-//结构体,改了名字以后就登陆不了
+//结构体
 type accountReqeustParams struct {
 	lt         string
 	execution  string
-	eventId   string
+	_eventId   string
 	submit     string
-	jsessionid string
+	JSESSIONID string
 }
 
 
@@ -127,11 +128,13 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 	}
 	_eventId = _eventIdArr[1]
 
+	//log.Println("Get params successfully", lt, execution, _eventId)
+
 	params.lt = lt
 	params.execution = execution
-	params.eventId = _eventId
+	params._eventId = _eventId
 	params.submit = "LOGIN"
-	params.jsessionid = JSESSIONID
+	params.JSESSIONID = JSESSIONID
 
 	return params, nil
 }
@@ -143,10 +146,10 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 	v.Set("password", password)
 	v.Set("lt", params.lt)
 	v.Set("execution", params.execution)
-	v.Set("_eventId", params.eventId)
+	v.Set("_eventId", params._eventId)
 	v.Set("submit", params.submit)
-
-	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
+	//fmt.Println(strings.NewReader(v.Encode()))
+	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.JSESSIONID, strings.NewReader(v.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
 
@@ -180,10 +183,10 @@ func makeAccountRequest2(sid, password string, params *accountReqeustParams, cli
 	v.Set("password", password)
 	v.Set("lt", params.lt)
 	v.Set("execution", params.execution)
-	v.Set("_eventId", params.eventId)
+	v.Set("_eventId", params._eventId)
 	v.Set("submit", params.submit)
-
-	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
+	//fmt.Println(strings.NewReader(v.Encode()))
+	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.JSESSIONID, strings.NewReader(v.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
 

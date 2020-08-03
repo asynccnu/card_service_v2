@@ -52,7 +52,7 @@ func Balance(c *gin.Context) {
 		"status":	s.CardInfo.StatusDesc,
 		 "money": 	s.CardInfo.Balance,
 			})
-
+}
 	return
 }
 

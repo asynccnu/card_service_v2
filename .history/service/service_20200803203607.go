@@ -1,7 +1,10 @@
 package service
 
 import(
+
+	//"encoding/json"
 	"errors"
+	"fmt"
 	"golang.org/x/net/publicsuffix"
 	"io/ioutil"
 	"log"
@@ -13,15 +16,14 @@ import(
 	"time"
 	
 )
-//和网页有关函数（基础）
 
-//结构体,改了名字以后就登陆不了
+//结构体
 type accountReqeustParams struct {
 	lt         string
 	execution  string
-	eventId   string
+	_eventId   string
 	submit     string
-	jsessionid string
+	JSESSIONID string
 }
 
 
@@ -127,11 +129,13 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 	}
 	_eventId = _eventIdArr[1]
 
+	//log.Println("Get params successfully", lt, execution, _eventId)
+
 	params.lt = lt
 	params.execution = execution
-	params.eventId = _eventId
+	params._eventId = _eventId
 	params.submit = "LOGIN"
-	params.jsessionid = JSESSIONID
+	params.JSESSIONID = JSESSIONID
 
 	return params, nil
 }
@@ -143,10 +147,10 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 	v.Set("password", password)
 	v.Set("lt", params.lt)
 	v.Set("execution", params.execution)
-	v.Set("_eventId", params.eventId)
+	v.Set("_eventId", params._eventId)
 	v.Set("submit", params.submit)
-
-	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
+	//fmt.Println(strings.NewReader(v.Encode()))
+	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.JSESSIONID, strings.NewReader(v.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
 
@@ -180,10 +184,10 @@ func makeAccountRequest2(sid, password string, params *accountReqeustParams, cli
 	v.Set("password", password)
 	v.Set("lt", params.lt)
 	v.Set("execution", params.execution)
-	v.Set("_eventId", params.eventId)
+	v.Set("_eventId", params._eventId)
 	v.Set("submit", params.submit)
-
-	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
+	//fmt.Println(strings.NewReader(v.Encode()))
+	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.JSESSIONID, strings.NewReader(v.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
 
@@ -226,3 +230,99 @@ func GetToken(sessionid, routeportal string, client *http.Client) (error,string 
 	return err,""
 }
 
+//获取校园卡流水
+func DoList(User_id, Password, Limit, Page, Start, End string) string{
+	params, err := makeAccountPreflightRequest()
+	if err != nil {
+		log.Println(err)
+		return "false"
+	}
+
+	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	if err != nil {
+		log.Println(err)
+		return "false"
+	}
+	client := http.Client{
+		Timeout: time.Duration(10 * time.Second),
+		Jar:     jar,
+	}
+	token := makeAccountRequest2(User_id, Password, params, &client)
+	v := url.Values{}
+	
+	v.Set("limit", Limit)
+	v.Set("page", Page)
+	v.Set("start", Start)
+	v.Set("end", End)
+	v.Set("tranType", "")
+	
+	req, err := http.NewRequest("POST", "http://one.ccnu.edu.cn/ecard_portal/query_trans", strings.NewReader(v.Encode()))
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	austr := fmt.Sprintf("Bearer %s", token)
+	req.Header.Set("Authorization", austr)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
+	bstr, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
+	result := string(bstr)
+	return result
+}
+
+//获取校园卡余额以及状态，及在用或者
+func DoStatus(User_id, Password string) string{
+	params, err := makeAccountPreflightRequest()
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
+	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+	client := http.Client{
+		Timeout: time.Duration(10 * time.Second),
+		Jar:     jar,
+	}
+	token := makeAccountRequest2(User_id, Password, params, &client)
+	v := url.Values{}
+	
+	req, _ := http.NewRequest("POST", "http://one.ccnu.edu.cn/ecard_portal/get_info", nil)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	austr := fmt.Sprintf("Bearer %s", token)
+	req.Header.Set("Authorization", austr)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println(string(v.Encode()))
+		log.Println("====")
+		log.Println(err)
+		return ""
+	}
+
+	bstr, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
+	result := string(bstr)
+	return result
+}
