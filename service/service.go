@@ -15,7 +15,7 @@ import(
 )
 //和网页有关函数（基础）
 
-//结构体,改了名字以后就登陆不了
+//结构体
 type accountReqeustParams struct {
 	lt         string
 	execution  string
