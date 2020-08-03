@@ -9,7 +9,6 @@ import (
 	"github.com/asynccnu/card_service_v2/log"
 	"github.com/asynccnu/card_service_v2/router"
 	"github.com/asynccnu/card_service_v2/router/middleware"
-
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"

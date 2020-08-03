@@ -2,11 +2,9 @@ package router
 
 import (
 	"net/http"
-
 	"github.com/asynccnu/card_service_v2/handler/sd"
 	"github.com/asynccnu/card_service_v2/handler/user"
 	"github.com/asynccnu/card_service_v2/router/middleware"
-
 	"github.com/gin-gonic/gin"
 )
 
