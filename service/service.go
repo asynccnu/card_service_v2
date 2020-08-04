@@ -19,33 +19,33 @@ import(
 type accountReqeustParams struct {
 	lt         string
 	execution  string
-	eventId   string
+	eventId    string
 	submit     string
 	jsessionid string
 }
 
 
 //确认模拟登陆是否成功
-func ConfirmUser(sid string, pwd string) bool {
+func ConfirmUser(sid string, pwd string) (bool,error) {
 	params, err := makeAccountPreflightRequest()
 	if err != nil {
 		log.Println(err)
-		return false
+		return false,err
 	}
 
 	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	if err != nil {
 		log.Println(err)
-		return false
+		return false,err
 	}
 	client := http.Client{
 		Timeout: time.Duration(10 * time.Second),
 		Jar:     jar,
 	}
-	//fmt.Println(params)
-	result := makeAccountRequest(sid, pwd, params, &client)
+	
+	result,err := makeAccountRequest(sid, pwd, params, &client)
 
-	return result
+	return result,err
 }
 
 // 预处理，打开 account.ccnu.edu.cn 获取模拟登陆需要的表单字段
@@ -137,7 +137,7 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 }
 
 // 进行模拟登陆
-func makeAccountRequest(sid, password string, params *accountReqeustParams, client *http.Client) bool {
+func makeAccountRequest(sid, password string, params *accountReqeustParams, client *http.Client) (bool,error) {
 	v := url.Values{}
 	v.Set("username", sid)
 	v.Set("password", password)
@@ -153,24 +153,25 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 	resp, err := client.Do(request)
 	if err != nil {
 		log.Print(err)
-		return false
+		return false,err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
 		log.Println(err)
-		return false
+		return false,err
 	}
 
 	reg := regexp.MustCompile("class=\"success\"")
 	matched := reg.MatchString(string(body))
 	if !matched {
 		log.Println("Wrong sid or pwd")
-		return false
+		err = errors.New("Wrong sid or pwd")
+		return false,err
 	}
 	
-	return true
+	return true,nil
 }
 
 //模拟登陆并且获取cookie

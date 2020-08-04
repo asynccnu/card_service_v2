@@ -15,7 +15,7 @@ type LoginPayload struct {
 }
 
 type CardInfo struct {
-    // No 			string		`json:"no"`
+  	// No 			string		`json:"no"`
 	// DeptName   	string		`json:"deptName"`
 	StatusDesc		string		`json:"statusDesc"`
 	Balance 		float32		`json:"balance"`
@@ -31,27 +31,29 @@ type Card struct {
 
 // Get  gets status and money by userid and password
 func Balance(c *gin.Context) {
-	var data LoginPayload // 声明payload变量，因为BindJSON方法需要接收一个指针进行操作
+	// 声明payload变量，因为BindJSON方法需要接收一个指针进行操作
+	var data LoginPayload 
 	var s Card
+
 	if err := c.BindJSON(&data); err != nil {
 		handler.SendError(c,errno.ErrBind,nil,err.Error())
 		return
 	}
 
-	if !service.ConfirmUser(data.User_id, data.Password) { // 检查失败的情况
-		c.JSON(401, gin.H{
-			"message": "Password or account wrong.",
-		})
+	// 检查失败的情况
+	if confirm,_ := service.ConfirmUser(data.User_id, data.Password);!confirm {
+		_,err := service.ConfirmUser(data.User_id, data.Password)
+		handler.SendError(c,errno.ErrPasswordIncorrect,nil,err.Error())
 		return
 	}
-		
+
 	ret := service.DoStatus(data.User_id, data.Password)
 	json.Unmarshal([]byte(ret), &s)
 	c.JSON(200, gin.H{
 		"message": "Authentiaction Success.",
 		"status":	s.CardInfo.StatusDesc,
-		 "money": 	s.CardInfo.Balance,
-			})
+		"money": 	s.CardInfo.Balance,
+		})
 
 	return
 }

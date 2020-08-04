@@ -94,7 +94,6 @@ func DoStatus(User_id, Password string) string{
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println(string(v.Encode()))
-		log.Println("====")
 		log.Println(err)
 		return ""
 	}
