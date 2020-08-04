@@ -10,10 +10,10 @@ import (
 
 // 输入的表单
 type Param struct {
-	User_id  		string			`json:"user_id"`
+	User_id			string			`json:"user_id"`
 	Password		string 			`json:"password"`
 	Limit			string			`json:"limit"`
-	Page 			string			`json:"page"`
+	Page			string			`json:"page"`
 	Start			string			`json:"start"`
 	End				string			`json:"end"`
 }
