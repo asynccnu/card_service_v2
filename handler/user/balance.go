@@ -15,18 +15,18 @@ type LoginPayload struct {
 }
 
 type CardInfo struct {
-  	// No 			string		`json:"no"`
-	// DeptName   	string		`json:"deptName"`
+	// No			string		`json:"no"`
+	// DeptName		string		`json:"deptName"`
 	StatusDesc		string		`json:"statusDesc"`
-	Balance 		float32		`json:"balance"`
-	// Xm 			string		`json:"xm"`
+	Balance			float32		`json:"balance"`
+	// Xm			string		`json:"xm"`
 	// ValidityDate	string		`json:"validityDate"`
 	// Status		string		`json:"status"`
 	// Username		string		`json:"username"`
 }
 
 type Card struct {
-	CardInfo	CardInfo	`json:"cardInfo"`
+	CardInfo		CardInfo	`json:"cardInfo"`
 }
 
 // Get  gets status and money by userid and password
