@@ -10,23 +10,23 @@ import (
 
 // 用于接收payload的结构体
 type LoginPayload struct { 
-	User_id  		 string 	 `json:"user_id"`
-	Password		 string		 `json:"password"`
+	User_id    string   `json:"user_id"`
+	Password   string   `json:"password"`
 }
 
 type CardInfo struct {
-	// No			string		`json:"no"`
-	// DeptName		string		`json:"deptName"`
-	StatusDesc		string		`json:"statusDesc"`
-	Balance			float32		`json:"balance"`
-	// Xm			string		`json:"xm"`
-	// ValidityDate	string		`json:"validityDate"`
-	// Status		string		`json:"status"`
-	// Username		string		`json:"username"`
+	// No           string    `json:"no"`
+	// DeptName     string    `json:"deptName"`
+	StatusDesc      string    `json:"statusDesc"`
+	Balance         float32   `json:"balance"`
+	// Xm           string    `json:"xm"`
+	// ValidityDate string    `json:"validityDate"`
+	// Status       string    `json:"status"`
+	// Username     string    `json:"username"`
 }
 
 type Card struct {
-	CardInfo		CardInfo	`json:"cardInfo"`
+	CardInfo        CardInfo  `json:"cardInfo"`
 }
 
 // Get  gets status and money by userid and password
