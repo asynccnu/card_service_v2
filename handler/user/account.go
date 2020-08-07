@@ -9,22 +9,22 @@ import (
 )
 
 // 输入的表单
-type Param struct {
-	Limit			string			`json:"limit"`
-	Page 			string			`json:"page"`
-	Start			string			`json:"start"`
-	End				string			`json:"end"`
+type param struct {
+	Limit     string      `json:"limit"`
+	Page      string      `json:"page"`
+	Start     string      `json:"start"`
+	End       string      `json:"end"`
 }
 
-type TempAccount struct{
-	Result			Results			`json:"result"`
+type tempAccount struct{
+	Result    results     `json:"result"`
 }
 
-type Results struct{
-	Rows			[]Row			`json:"rows"`
+type results struct{
+	Rows      []row       `json:"rows"`
 }
 
-type Row struct{
+type row struct{
 	DealName    string    `json:"dealName"`
 	OrgName     string    `json:"orgName"`
 	TransMoney  float32   `json:"transMoney"`
@@ -37,10 +37,10 @@ type Row struct{
 // Get gets an account by userid and password
 func Account(c *gin.Context) {
 	// 声明payload变量，因为BindJSON方法需要接收一个指针进行操作
-	var data 	Param 
-	var s 		TempAccount
-	var lists	[]Row
-	var message	LoginPayload
+	var data 	param 
+	var s 		tempAccount
+	var lists	[]row
+	var message	loginPayload
 
 	if err := c.BindJSON(&message); err != nil {
 		handler.SendError(c,errno.ErrBind,nil,err.Error())
@@ -60,16 +60,21 @@ func Account(c *gin.Context) {
 	}
 
 	// 获得string格式的account
-	temp := service.DoList(message.User_id, message.Password, data.Limit, data.Page, data.Start, data.End) 
-	json.Unmarshal([]byte(temp), &s)
+	temp,err := service.DoList(message.User_id, message.Password, data.Limit, data.Page, data.Start, data.End) 
+	if err != nil {
+		handler.SendError(c,err,nil,err.Error())
+	}
+
+	err = json.Unmarshal([]byte(temp), &s)
+	if err != nil {
+		handler.SendError(c,err,nil,err.Error())
+	}
 
 	for _,val := range s.Result.Rows{
 		lists = append (lists,val)
 	}
-	c.JSON(200, gin.H{
-		"message": "Authentiaction Success.",
-		"list":	lists,
-	})
+
+	handler.SendResponse(c, nil, lists)
 		
 	return
 }

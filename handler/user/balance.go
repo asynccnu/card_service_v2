@@ -9,12 +9,12 @@ import (
 )
 
 // 用于接收payload的结构体
-type LoginPayload struct { 
+type loginPayload struct { 
 	User_id    string   `json:"user_id"`
 	Password   string   `json:"password"`
 }
 
-type CardInfo struct {
+type cardInfo struct {
 	// No           string    `json:"no"`
 	// DeptName     string    `json:"deptName"`
 	StatusDesc      string    `json:"statusDesc"`
@@ -25,15 +25,15 @@ type CardInfo struct {
 	// Username     string    `json:"username"`
 }
 
-type Card struct {
-	CardInfo        CardInfo  `json:"cardInfo"`
+type card struct {
+	CardInfo        cardInfo  `json:"cardInfo"`
 }
 
 // Get  gets status and money by userid and password
 func Balance(c *gin.Context) {
 	// 声明payload变量，因为BindJSON方法需要接收一个指针进行操作
-	var data LoginPayload 
-	var s Card
+	var data loginPayload 
+	var s card
 
 	if err := c.BindJSON(&data); err != nil {
 		handler.SendError(c,errno.ErrBind,nil,err.Error())
@@ -47,13 +47,17 @@ func Balance(c *gin.Context) {
 		return
 	}
 
-	ret := service.DoStatus(data.User_id, data.Password)
-	json.Unmarshal([]byte(ret), &s)
-	c.JSON(200, gin.H{
-		"message": "Authentiaction Success.",
-		"status":	s.CardInfo.StatusDesc,
-		"money": 	s.CardInfo.Balance,
-		})
+	ret,err := service.DoStatus(data.User_id, data.Password)
+	if err != nil {
+		handler.SendError(c,err,nil,err.Error())
+	}
+
+	err = json.Unmarshal([]byte(ret), &s)
+	if err != nil {
+		handler.SendError(c,err,nil,err.Error())
+	}
+
+	handler.SendResponse(c, nil, s)
 
 	return
 }

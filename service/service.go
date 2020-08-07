@@ -147,6 +147,11 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 	v.Set("submit", params.submit)
 
 	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
+	if err != nil {
+		log.Println(err)
+		return false,err
+	}
+
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
 
@@ -175,7 +180,7 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 }
 
 //模拟登陆并且获取cookie
-func makeAccountRequest2(sid, password string, params *accountReqeustParams, client *http.Client)( w string) {
+func makeAccountRequest2(sid, password string, params *accountReqeustParams, client *http.Client)( w string,err error) {
 	v := url.Values{}
 	v.Set("username", sid)
 	v.Set("password", password)
@@ -185,6 +190,9 @@ func makeAccountRequest2(sid, password string, params *accountReqeustParams, cli
 	v.Set("submit", params.submit)
 
 	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
+	if err != nil {
+		return "",err
+	}
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
 
@@ -203,15 +211,19 @@ func makeAccountRequest2(sid, password string, params *accountReqeustParams, cli
 	}
 	if err,w = GetToken(s1, s2, client);err!=nil{
 		log.Println(err)
-		return ""
+		return "",err
 	}
 
-	return w
+	return w,err
 }
 
 //获取token
 func GetToken(sessionid, routeportal string, client *http.Client) (error,string ){
 	request, err := http.NewRequest("GET", "http://one.ccnu.edu.cn/cas/login_portal;jsessionid=" + sessionid, nil)
+	if err != nil {
+		return err,""
+	}
+
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
 	resp, err := client.Do(request)
