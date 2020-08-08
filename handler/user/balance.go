@@ -34,7 +34,7 @@ type card struct {
 func Balance(c *gin.Context) {
 	// 声明payload变量，因为BindJSON方法需要接收一个指针进行操作
 	var data loginPayload
-	var s card
+	var tempCard card
 
 	if err := c.BindJSON(&data); err != nil {
 		handler.SendError(c, errno.ErrBind, nil, err.Error())
@@ -47,17 +47,17 @@ func Balance(c *gin.Context) {
 		return
 	}
 
-	ret, err := service.DoStatus(data.UserId, data.Password)
+	temp, err := service.DoStatus(data.UserId, data.Password)
 	if err != nil {
 		handler.SendError(c, err, nil, err.Error())
 	}
 
-	err = json.Unmarshal([]byte(ret), &s)
+	err = json.Unmarshal([]byte(temp), &tempCard)
 	if err != nil {
 		handler.SendError(c, err, nil, err.Error())
 	}
 
-	handler.SendResponse(c, nil, s)
+	handler.SendResponse(c, nil, tempCard)
 
 	return
 }

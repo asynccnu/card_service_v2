@@ -38,7 +38,7 @@ type row struct {
 func Account(c *gin.Context) {
 	// 声明payload变量，因为BindJSON方法需要接收一个指针进行操作
 	var data param
-	var templists tempAccount
+	var tempLists tempAccount
 	var lists []row
 	var message loginPayload
 
@@ -64,12 +64,12 @@ func Account(c *gin.Context) {
 		handler.SendError(c, err, nil, err.Error())
 	}
 
-	err = json.Unmarshal([]byte(temp), &templists)
+	err = json.Unmarshal([]byte(temp), &tempLists)
 	if err != nil {
 		handler.SendError(c, err, nil, err.Error())
 	}
 
-	for _, list := range templists.Result.Rows {
+	for _, list := range tempLists.Result.Rows {
 		lists = append(lists, list)
 	}
 
