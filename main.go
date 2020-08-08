@@ -3,8 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"net/http"
-	"time"
 	"github.com/asynccnu/card_service_v2/config"
 	"github.com/asynccnu/card_service_v2/log"
 	"github.com/asynccnu/card_service_v2/router"
@@ -13,6 +11,8 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"net/http"
+	"time"
 )
 
 var (
