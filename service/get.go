@@ -15,7 +15,7 @@ import (
 //两个和api有关函数
 
 //获取校园卡流水
-func DoList(userId, password, limit, page, start, end string) (string, error) {
+func GetConsumeList(userId, password, limit, page, start, end string) (string, error) {
 	params, err := makeAccountPreflightRequest()
 	if err != nil {
 		log.Println(err)
@@ -68,7 +68,7 @@ func DoList(userId, password, limit, page, start, end string) (string, error) {
 }
 
 //获取校园卡余额以及状态，及在用或者丢失
-func DoStatus(User_id, Password string) (string, error) {
+func GetCardInfo(User_id, Password string) (string, error) {
 	params, err := makeAccountPreflightRequest()
 	if err != nil {
 		log.Println(err)

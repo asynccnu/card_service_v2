@@ -18,8 +18,8 @@ type loginPayload struct {
 type cardInfo struct {
 	// No           string  `json:"no"`
 	// DeptName     string  `json:"deptName"`
-	StatusDesc      string  `json:"statusDesc"`
-	Balance         float32 `json:"balance"`
+	StatusDesc string  `json:"statusDesc"`
+	Balance    float32 `json:"balance"`
 	// Xm           string  `json:"xm"`
 	// ValidityDate string  `json:"validityDate"`
 	// Status       string  `json:"status"`
@@ -47,14 +47,16 @@ func Balance(c *gin.Context) {
 		return
 	}
 
-	temp, err := service.DoStatus(data.UserId, data.Password)
+	temp, err := service.GetCardInfo(data.UserId, data.Password)
 	if err != nil {
 		handler.SendError(c, err, nil, err.Error())
+		return
 	}
 
 	err = json.Unmarshal([]byte(temp), &tempCard)
 	if err != nil {
 		handler.SendError(c, err, nil, err.Error())
+		return
 	}
 
 	handler.SendResponse(c, nil, tempCard)

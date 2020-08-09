@@ -22,7 +22,7 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	})
 
 	// The card handlers
-	u := g.Group("/card")
+	u := g.Group("/api/v1/card")
 	{
 		u.GET("/balance", user.Balance) //余额和状态
 		u.GET("/account", user.Account) //消费流水
