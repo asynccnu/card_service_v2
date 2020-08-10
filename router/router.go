@@ -1,11 +1,13 @@
 package router
 
 import (
-	"github.com/asynccnu/card_service_v2/handler/sd"
-	"github.com/asynccnu/card_service_v2/handler/user"
-	"github.com/asynccnu/card_service_v2/router/middleware"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/asynccnu/card_service_v2/handler/card"
+	"github.com/asynccnu/card_service_v2/handler/sd"
+	"github.com/asynccnu/card_service_v2/router/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Load loads the middlewares, routes, handlers.
@@ -22,10 +24,11 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 	})
 
 	// The card handlers
-	u := g.Group("/api/v1/card")
+	api := g.Group("/api/card/v1")
+	api.Use(middleware.AuthMiddleware())
 	{
-		u.GET("/balance", user.Balance) //余额和状态
-		u.GET("/account", user.Account) //消费流水
+		api.GET("/balance", card.Balance) // 余额和状态
+		api.GET("/account", card.Account) // 消费流水
 	}
 
 	// The health check handlers

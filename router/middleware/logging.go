@@ -7,14 +7,13 @@ import (
 	"io/ioutil"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/asynccnu/card_service_v2/handler"
 	"github.com/asynccnu/card_service_v2/log"
 	"github.com/asynccnu/card_service_v2/pkg/errno"
 
 	"github.com/gin-gonic/gin"
 	"github.com/willf/pad"
+	"go.uber.org/zap"
 )
 
 type bodyLogWriter struct {

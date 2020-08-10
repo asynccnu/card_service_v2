@@ -1,13 +1,15 @@
-package user
+package card
 
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/asynccnu/card_service_v2/handler"
 	"github.com/asynccnu/card_service_v2/pkg/errno"
 	"github.com/asynccnu/card_service_v2/service"
+
 	"github.com/gin-gonic/gin"
-	"time"
 )
 
 // 输入的表单
@@ -38,17 +40,14 @@ type row struct {
 
 // Get gets an account by userid and password
 func Account(c *gin.Context) {
+	sid := c.MustGet("Sid").(string)
+	password := c.MustGet("Password").(string)
+
 	// 声明payload变量，因为BindJSON方法需要接收一个指针进行操作
 	var data param
 	var tempLists tempAccount
 	var lists []row
-	var message loginPayload
 	var date string
-
-	if err := c.BindJSON(&message); err != nil {
-		handler.SendError(c, errno.ErrBind, nil, err.Error())
-		return
-	}
 
 	if err := c.BindQuery(&data); err != nil {
 		handler.SendError(c, errno.ErrBind, nil, err.Error())
@@ -68,13 +67,13 @@ func Account(c *gin.Context) {
 	data.End = c.DefaultQuery("end", date)
 
 	// 检查失败的情况
-	if err := service.ConfirmUser(message.UserId, message.Password); err != nil {
+	if err := service.ConfirmUser(sid, password); err != nil {
 		handler.SendError(c, errno.ErrPasswordIncorrect, nil, err.Error())
 		return
 	}
 
 	// 获得string格式的account
-	temp, err := service.GetConsumeList(message.UserId, message.Password, data.Limit, data.Page, data.Start, data.End)
+	temp, err := service.GetConsumeList(sid, password, data.Limit, data.Page, data.Start, data.End)
 	if err != nil {
 		handler.SendError(c, err, nil, err.Error())
 		return
@@ -91,6 +90,4 @@ func Account(c *gin.Context) {
 	}
 
 	handler.SendResponse(c, nil, lists)
-
-	return
 }
