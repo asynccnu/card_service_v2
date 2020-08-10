@@ -2,20 +2,18 @@ package service
 
 import (
 	"errors"
-	"golang.org/x/net/publicsuffix"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/http/cookiejar"
 	"net/url"
 	"regexp"
 	"strings"
-	"time"
+
+	"github.com/asynccnu/card_service_v2/pkg/errno"
 )
 
-//和网页有关函数（基础）
+// 和网页有关函数（基础）
 
-//结构体
 type accountReqeustParams struct {
 	lt         string
 	execution  string
@@ -24,35 +22,14 @@ type accountReqeustParams struct {
 	jsessionid string
 }
 
-//确认模拟登陆是否成功
-func ConfirmUser(sid string, pwd string) error {
-	params, err := makeAccountPreflightRequest()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	client := http.Client{
-		Timeout: time.Duration(10 * time.Second),
-		Jar:     jar,
-	}
-
-	err = makeAccountRequest(sid, pwd, params, &client)
-
-	return err
-}
-
 // 预处理，打开 account.ccnu.edu.cn 获取模拟登陆需要的表单字段
 func makeAccountPreflightRequest() (*accountReqeustParams, error) {
-	var JSESSIONID string
-	var lt string
-	var execution string
-	var _eventId string
+	var (
+		JSESSIONID string
+		lt         string
+		execution  string
+		_eventId   string
+	)
 
 	params := &accountReqeustParams{}
 
@@ -71,7 +48,6 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 	// 发起请求
 	resp, err := client.Do(request)
 	if err != nil {
-
 		log.Println(err)
 		return params, err
 	}
@@ -135,8 +111,8 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 	return params, nil
 }
 
-// 进行模拟登陆
-func makeAccountRequest(sid, password string, params *accountReqeustParams, client *http.Client) error {
+// 模拟登陆并且获取 cookie
+func makeAccountRequest(sid, password string, params *accountReqeustParams, client *http.Client) (string, error) {
 	v := url.Values{}
 	v.Set("username", sid)
 	v.Set("password", password)
@@ -147,8 +123,7 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 
 	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
 	if err != nil {
-		log.Println(err)
-		return err
+		return "", err
 	}
 
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -157,83 +132,64 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 	resp, err := client.Do(request)
 	if err != nil {
 		log.Print(err)
-		return err
+		return "", err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
 		log.Println(err)
-		return err
+		return "", err
 	}
 
+	// 验证是否登录成功
 	reg := regexp.MustCompile("class=\"success\"")
 	matched := reg.MatchString(string(body))
 	if !matched {
 		log.Println("Wrong sid or pwd")
-		err = errors.New("Wrong sid or pwd")
-		return err
+		return "", errno.ErrPasswordIncorrect
 	}
 
-	return nil
-}
-
-//模拟登陆并且获取cookie
-func makeAccountRequest2(sid, password string, params *accountReqeustParams, client *http.Client) (w string, err error) {
-	v := url.Values{}
-	v.Set("username", sid)
-	v.Set("password", password)
-	v.Set("lt", params.lt)
-	v.Set("execution", params.execution)
-	v.Set("_eventId", params.eventId)
-	v.Set("submit", params.submit)
-
-	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
-	if err != nil {
-		return "", err
-	}
-	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
-
-	resp, err := client.Do(request)
-	if err != nil {
-		log.Print(err)
-	}
-
-	var s1, s2 string
+	// 获取 cookie
+	var sessionID, routeportal string
 	for _, cookie := range resp.Cookies() {
 		if cookie.Name == "JSESSIONID" {
-			s1 = cookie.Value
+			sessionID = cookie.Value
 		} else if cookie.Name == "routeportal" {
-			s2 = cookie.Value
+			routeportal = cookie.Value
 		}
 	}
-	if err, w = GetPortalTokenFrom(s1, s2, client); err != nil {
+
+	// 获取 token
+	token, err := GetPortalTokenFrom(sessionID, routeportal, client)
+	if err != nil {
 		log.Println(err)
 		return "", err
 	}
 
-	return w, err
+	return token, err
 }
 
-//获取token
-func GetPortalTokenFrom(sessionid, routeportal string, client *http.Client) (error, string) {
-	request, err := http.NewRequest("GET", "http://one.ccnu.edu.cn/cas/login_portal;jsessionid="+sessionid, nil)
+// 请求获取 token
+func GetPortalTokenFrom(sessionID, routeportal string, client *http.Client) (string, error) {
+	request, err := http.NewRequest("GET", "http://one.ccnu.edu.cn/cas/login_portal;jsessionid="+sessionID, nil)
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
+
 	resp, err := client.Do(request)
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 
 	for _, cookie := range resp.Cookies() {
 		if cookie.Name == "PORTAL_TOKEN" {
-			return nil, cookie.Value
+			return cookie.Value, nil
 		}
 	}
-	return err, ""
+
+	return "", errors.New("Get token failed")
 }
