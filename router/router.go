@@ -1,13 +1,11 @@
 package router
 
 import (
-	"net/http"
-
 	"github.com/asynccnu/card_service_v2/handler/sd"
 	"github.com/asynccnu/card_service_v2/handler/user"
 	"github.com/asynccnu/card_service_v2/router/middleware"
-
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 // Load loads the middlewares, routes, handlers.
@@ -23,15 +21,11 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 		c.String(http.StatusNotFound, "The incorrect API route.")
 	})
 
-	// The user handlers, requiring authentication
-	u := g.Group("/api/v1/user")
-	u.Use(middleware.AuthMiddleware())
+	// The card handlers
+	u := g.Group("/api/v1/card")
 	{
-		u.POST("", user.Create)
-		u.DELETE("/:id", user.Delete)
-		u.PUT("/:id", user.Update)
-		u.GET("", user.List)
-		u.GET("/:username", user.Get)
+		u.GET("/balance", user.Balance) //余额和状态
+		u.GET("/account", user.Account) //消费流水
 	}
 
 	// The health check handlers

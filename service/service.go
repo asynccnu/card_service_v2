@@ -1,73 +1,239 @@
 package service
 
 import (
-	"fmt"
-	"sync"
-
-	"github.com/asynccnu/card_service_v2/model"
-	"github.com/asynccnu/card_service_v2/util"
+	"errors"
+	"golang.org/x/net/publicsuffix"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"net/http/cookiejar"
+	"net/url"
+	"regexp"
+	"strings"
+	"time"
 )
 
-func ListUser(username string, offset, limit int) ([]*model.UserInfo, uint64, error) {
-	infos := make([]*model.UserInfo, 0)
-	users, count, err := model.ListUser(username, offset, limit)
+//和网页有关函数（基础）
+
+//结构体
+type accountReqeustParams struct {
+	lt         string
+	execution  string
+	eventId    string
+	submit     string
+	jsessionid string
+}
+
+//确认模拟登陆是否成功
+func ConfirmUser(sid string, pwd string) error {
+	params, err := makeAccountPreflightRequest()
 	if err != nil {
-		return nil, count, err
+		log.Println(err)
+		return err
 	}
 
-	ids := []uint64{}
-	for _, user := range users {
-		ids = append(ids, user.Id)
+	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	client := http.Client{
+		Timeout: time.Duration(10 * time.Second),
+		Jar:     jar,
 	}
 
-	wg := sync.WaitGroup{}
-	userList := model.UserList{
-		Lock:  new(sync.Mutex),
-		IdMap: make(map[uint64]*model.UserInfo, len(users)),
+	err = makeAccountRequest(sid, pwd, params, &client)
+
+	return err
+}
+
+// 预处理，打开 account.ccnu.edu.cn 获取模拟登陆需要的表单字段
+func makeAccountPreflightRequest() (*accountReqeustParams, error) {
+	var JSESSIONID string
+	var lt string
+	var execution string
+	var _eventId string
+
+	params := &accountReqeustParams{}
+
+	// 初始化 http client
+	client := http.Client{
+		//Timeout: TIMEOUT,
 	}
 
-	errChan := make(chan error, 1)
-	finished := make(chan bool, 1)
-
-	// Improve query efficiency in parallel
-	for _, u := range users {
-		wg.Add(1)
-		go func(u *model.UserModel) {
-			defer wg.Done()
-
-			shortId, err := util.GenShortId()
-			if err != nil {
-				errChan <- err
-				return
-			}
-
-			userList.Lock.Lock()
-			defer userList.Lock.Unlock()
-			userList.IdMap[u.Id] = &model.UserInfo{
-				Id:        u.Id,
-				Username:  u.Username,
-				SayHello:  fmt.Sprintf("Hello %s", shortId),
-				Password:  u.Password,
-				CreatedAt: u.CreatedAt.Format("2006-01-02 15:04:05"),
-				UpdatedAt: u.UpdatedAt.Format("2006-01-02 15:04:05"),
-			}
-		}(u)
+	// 初始化 http request
+	request, err := http.NewRequest("GET", "https://account.ccnu.edu.cn/cas/login", nil)
+	if err != nil {
+		log.Println(err)
+		return params, err
 	}
 
-	go func() {
-		wg.Wait()
-		close(finished)
-	}()
+	// 发起请求
+	resp, err := client.Do(request)
+	if err != nil {
 
-	select {
-	case <-finished:
-	case err := <-errChan:
-		return nil, count, err
+		log.Println(err)
+		return params, err
 	}
 
-	for _, id := range ids {
-		infos = append(infos, userList.IdMap[id])
+	// 读取 Body
+	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	if err != nil {
+		log.Println(err)
+		return params, err
 	}
 
-	return infos, count, nil
+	// 获取 Cookie 中的 JSESSIONID
+	for _, cookie := range resp.Cookies() {
+		//fmt.Println(cookie.Value)
+		if cookie.Name == "JSESSIONID" {
+			JSESSIONID = cookie.Value
+		}
+	}
+
+	if JSESSIONID == "" {
+		log.Println("Can not get JSESSIONID")
+		return params, errors.New("Can not get JSESSIONID")
+	}
+
+	// 正则匹配 HTML 返回的表单字段
+	ltReg := regexp.MustCompile("name=\"lt\".+value=\"(.+)\"")
+	executionReg := regexp.MustCompile("name=\"execution\".+value=\"(.+)\"")
+	_eventIdReg := regexp.MustCompile("name=\"_eventId\".+value=\"(.+)\"")
+
+	bodyStr := string(body)
+
+	ltArr := ltReg.FindStringSubmatch(bodyStr)
+	if len(ltArr) != 2 {
+		log.Println("Can not get form paramater: lt")
+		return params, errors.New("Can not get form paramater: lt")
+	}
+	lt = ltArr[1]
+
+	execArr := executionReg.FindStringSubmatch(bodyStr)
+	if len(execArr) != 2 {
+		log.Println("Can not get form paramater: execution")
+		return params, errors.New("Can not get form paramater: execution")
+	}
+	execution = execArr[1]
+
+	_eventIdArr := _eventIdReg.FindStringSubmatch(bodyStr)
+	if len(_eventIdArr) != 2 {
+		log.Println("Can not get form paramater: _eventId")
+		return params, errors.New("Can not get form paramater: _eventId")
+	}
+	_eventId = _eventIdArr[1]
+
+	params.lt = lt
+	params.execution = execution
+	params.eventId = _eventId
+	params.submit = "LOGIN"
+	params.jsessionid = JSESSIONID
+
+	return params, nil
+}
+
+// 进行模拟登陆
+func makeAccountRequest(sid, password string, params *accountReqeustParams, client *http.Client) error {
+	v := url.Values{}
+	v.Set("username", sid)
+	v.Set("password", password)
+	v.Set("lt", params.lt)
+	v.Set("execution", params.execution)
+	v.Set("_eventId", params.eventId)
+	v.Set("submit", params.submit)
+
+	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
+
+	resp, err := client.Do(request)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	reg := regexp.MustCompile("class=\"success\"")
+	matched := reg.MatchString(string(body))
+	if !matched {
+		log.Println("Wrong sid or pwd")
+		err = errors.New("Wrong sid or pwd")
+		return err
+	}
+
+	return nil
+}
+
+//模拟登陆并且获取cookie
+func makeAccountRequest2(sid, password string, params *accountReqeustParams, client *http.Client) (w string, err error) {
+	v := url.Values{}
+	v.Set("username", sid)
+	v.Set("password", password)
+	v.Set("lt", params.lt)
+	v.Set("execution", params.execution)
+	v.Set("_eventId", params.eventId)
+	v.Set("submit", params.submit)
+
+	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
+	if err != nil {
+		return "", err
+	}
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
+
+	resp, err := client.Do(request)
+	if err != nil {
+		log.Print(err)
+	}
+
+	var s1, s2 string
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == "JSESSIONID" {
+			s1 = cookie.Value
+		} else if cookie.Name == "routeportal" {
+			s2 = cookie.Value
+		}
+	}
+	if err, w = GetPortalTokenFrom(s1, s2, client); err != nil {
+		log.Println(err)
+		return "", err
+	}
+
+	return w, err
+}
+
+//获取token
+func GetPortalTokenFrom(sessionid, routeportal string, client *http.Client) (error, string) {
+	request, err := http.NewRequest("GET", "http://one.ccnu.edu.cn/cas/login_portal;jsessionid="+sessionid, nil)
+	if err != nil {
+		return err, ""
+	}
+
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
+	resp, err := client.Do(request)
+	if err != nil {
+		return err, ""
+	}
+
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == "PORTAL_TOKEN" {
+			return nil, cookie.Value
+		}
+	}
+	return err, ""
 }
