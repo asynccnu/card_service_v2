@@ -8,9 +8,9 @@
 ## API
 ### 查询余额
 
-| Method | URL                   | Header        |
-| ------ | --------------------- | ------------- |
-| GET    | /api/card/v1/balance/ | Authorization |
+| Method | URL                  | Header        |
+| ------ | -------------------- | ------------- |
+| GET    | /api/card/v1/balance | Authorization |
 
 **RESPONSE Data:**
 ```json

@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/asynccnu/card_service_v2/pkg/errno"
 )
@@ -22,6 +23,8 @@ type accountReqeustParams struct {
 	jsessionid string
 }
 
+var TIMEOUT = time.Duration(30 * time.Second)
+
 // 预处理，打开 account.ccnu.edu.cn 获取模拟登陆需要的表单字段
 func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 	var (
@@ -35,7 +38,7 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 
 	// 初始化 http client
 	client := http.Client{
-		//Timeout: TIMEOUT,
+		Timeout: TIMEOUT,
 	}
 
 	// 初始化 http request
@@ -123,6 +126,7 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 
 	request, err := http.NewRequest("POST", "https://account.ccnu.edu.cn/cas/login;jsessionid="+params.jsessionid, strings.NewReader(v.Encode()))
 	if err != nil {
+		log.Println(err)
 		return "", err
 	}
 
