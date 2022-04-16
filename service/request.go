@@ -45,7 +45,7 @@ func MakeCardInfoRequest(sid, password string) (*CardInfo, error) {
 	}
 
 	client := http.Client{
-		Timeout: time.Duration(10 * time.Second),
+		Timeout: time.Duration(5 * time.Second),
 		Jar:     jar,
 	}
 

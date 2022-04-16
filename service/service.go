@@ -15,7 +15,7 @@ import (
 
 // 和网页有关函数（基础）
 
-type accountReqeustParams struct {
+type accountRequestParams struct {
 	lt         string
 	execution  string
 	eventId    string
@@ -26,7 +26,7 @@ type accountReqeustParams struct {
 var TIMEOUT = time.Duration(30 * time.Second)
 
 // 预处理，打开 account.ccnu.edu.cn 获取模拟登陆需要的表单字段
-func makeAccountPreflightRequest() (*accountReqeustParams, error) {
+func makeAccountPreflightRequest() (*accountRequestParams, error) {
 	var (
 		JSESSIONID string
 		lt         string
@@ -34,7 +34,7 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 		_eventId   string
 	)
 
-	params := &accountReqeustParams{}
+	params := &accountRequestParams{}
 
 	// 初始化 http client
 	client := http.Client{
@@ -66,7 +66,6 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 
 	// 获取 Cookie 中的 JSESSIONID
 	for _, cookie := range resp.Cookies() {
-		//fmt.Println(cookie.Value)
 		if cookie.Name == "JSESSIONID" {
 			JSESSIONID = cookie.Value
 		}
@@ -115,7 +114,7 @@ func makeAccountPreflightRequest() (*accountReqeustParams, error) {
 }
 
 // 模拟登陆并且获取 cookie
-func makeAccountRequest(sid, password string, params *accountReqeustParams, client *http.Client) (string, error) {
+func makeAccountRequest(sid, password string, params *accountRequestParams, client *http.Client) (string, error) {
 	v := url.Values{}
 	v.Set("username", sid)
 	v.Set("password", password)
@@ -135,7 +134,7 @@ func makeAccountRequest(sid, password string, params *accountReqeustParams, clie
 
 	resp, err := client.Do(request)
 	if err != nil {
-		log.Print(err)
+		log.Println(err)
 		return "", err
 	}
 
@@ -184,9 +183,26 @@ func GetPortalTokenFrom(sessionID, routeportal string, client *http.Client) (str
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36")
 
-	resp, err := client.Do(request)
-	if err != nil {
-		return "", err
+	chanResp := make(chan *http.Response)
+	f := func() {
+		resp, err := client.Do(request)
+		if err != nil {
+			resp, err = client.Do(request)
+		}
+		chanResp <- resp
+	}
+	for i := 0; i < 3; i++ {
+		go f()
+	}
+
+	go func() {
+		time.Sleep(time.Second * 10)
+		chanResp <- nil
+	}()
+
+	resp := <-chanResp
+	if resp == nil {
+		return "", errors.New("get http://one.ccnu.edu.cn wrong")
 	}
 
 	for _, cookie := range resp.Cookies() {
@@ -195,5 +211,5 @@ func GetPortalTokenFrom(sessionID, routeportal string, client *http.Client) (str
 		}
 	}
 
-	return "", errors.New("Get token failed")
+	return "", errors.New("get token failed")
 }

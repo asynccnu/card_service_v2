@@ -16,9 +16,10 @@ type AccountResponseData struct {
 
 // Get gets an account by userid and password
 func Account(c *gin.Context) {
-	sid := c.MustGet("Sid").(string)
-	password := c.MustGet("Password").(string)
-
+	// sid := c.MustGet("Sid").(string)
+	// password := c.MustGet("Password").(string)
+	sid := "2020213675"
+	password := "lstao1121917"
 	// 获取当前日期
 	currentDate := util.GetCurrentDate()
 
