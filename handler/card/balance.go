@@ -10,10 +10,9 @@ import (
 
 // 获取余额
 func Balance(c *gin.Context) {
-	// sid := c.MustGet("Sid").(string)
-	// password := c.MustGet("Password").(string)
-	sid := "2020213675"
-	password := "lstao1121917"
+	sid := c.MustGet("Sid").(string)
+	password := c.MustGet("Password").(string)
+
 	// 获取一卡通信息，包括余额信息
 	cardInfo, err := service.GetCardInfo(sid, password)
 	if err != nil {

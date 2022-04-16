@@ -25,7 +25,7 @@ func Load(g *gin.Engine, mw ...gin.HandlerFunc) *gin.Engine {
 
 	// The card handlers
 	api := g.Group("/api/card/v1")
-	// api.Use(middleware.AuthMiddleware())
+	api.Use(middleware.AuthMiddleware())
 	{
 		api.GET("/balance", card.Balance) // 余额和状态
 		api.GET("/account", card.Account) // 消费流水
